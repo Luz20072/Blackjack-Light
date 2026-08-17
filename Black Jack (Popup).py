@@ -1,5 +1,5 @@
 import tkinter as tk
-from random import shuffle, randint
+from random import shuffle
 import time
 
 # Kartendaten
@@ -129,14 +129,12 @@ def stop_game():
     end = True
     show_message(f"Your final Count is: {sum_of_player}")
 
-    dealer_cards_amount = randint(2, 4)
-
     dealer_hand = []
     sum_of_dealer = 0
 
     show_message("Dealer draws:")
 
-    for _ in range(dealer_cards_amount):
+    while sum_of_dealer < 17:
         card = draw_card()
 
         if card is None:
