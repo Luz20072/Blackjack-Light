@@ -15,6 +15,13 @@ worth_of_cards = {
 deck = []
 used_cards = []
 
+# Statistik
+games_played = 0
+wins = 0
+losses = 0
+ties = 0
+blackjack_wins = 0
+
 
 # Spiellogik
 
@@ -51,9 +58,9 @@ end = False
 # GUI Setup
 root = tk.Tk()
 root.title("Blackjack Light")
-root.geometry("400x400")
+root.geometry("500x400")
 
-output = tk.Text(root, height=15, width=45, state="disabled", wrap="word")
+output = tk.Text(root, height=15, width=55, state="disabled", wrap="word")
 output.pack(pady=10)
 
 
@@ -76,6 +83,67 @@ def draw_card():
     used_cards.append(card)
 
     return card
+
+
+def record_game(result, blackjack=False):
+    global games_played, wins, losses, ties, blackjack_wins
+
+    games_played += 1
+
+    if result == "win":
+        wins += 1
+
+        if blackjack:
+            blackjack_wins += 1
+
+    elif result == "loss":
+        losses += 1
+
+    elif result == "tie":
+        ties += 1
+
+
+def show_statistics():
+    statistics_window = tk.Toplevel(root)
+    statistics_window.title("Statistics")
+    statistics_window.geometry("300x300")
+    statistics_window.resizable(False, False)
+
+    tk.Label(
+        statistics_window,
+        text="Statistics",
+        font=("Arial", 16, "bold")
+    ).pack(pady=10)
+
+    if games_played == 0:
+        tk.Label(
+            statistics_window,
+            text="No games played yet!"
+        ).pack(pady=20)
+        return
+
+    win_rate = wins / games_played * 100
+    loss_rate = losses / games_played * 100
+    tie_rate = ties / games_played * 100
+    blackjack_rate = blackjack_wins / games_played * 100
+
+    statistics_text = (
+        f"Games played: {games_played}\n"
+        f"Wins: {wins}\n"
+        f"Losses: {losses}\n"
+        f"Ties: {ties}\n"
+        f"Blackjack wins: {blackjack_wins}\n\n"
+        f"Win rate: {win_rate:.1f}%\n"
+        f"Loss rate: {loss_rate:.1f}%\n"
+        f"Tie rate: {tie_rate:.1f}%\n"
+        f"Blackjack rate: {blackjack_rate:.1f}%"
+    )
+
+    tk.Label(
+        statistics_window,
+        text=statistics_text,
+        justify="left"
+    ).pack()
 
 
 def end_game():
@@ -110,6 +178,9 @@ def dealer_draw_step():
         if dealer_value > 21:
             show_message("Dealer got too high!")
             show_message("Congratulations! You Won!")
+
+            record_game("win")
+
             end_game()
             return
 
@@ -122,10 +193,15 @@ def dealer_draw_step():
 
     if dealer_value < player_value:
         show_message("Congratulations! You Won!")
+        record_game("win")
+
     elif dealer_value == player_value:
         show_message("Tie!")
+        record_game("tie")
+
     else:
         show_message("Oh No! You Lost!")
+        record_game("loss")
 
     end_game()
 
@@ -135,10 +211,12 @@ def update_buttons(game_running):
         btn_start.config(state="disabled")
         btn_yes.config(state="normal")
         btn_no.config(state="normal")
+        btn_statistics.config(state="disabled")
     else:
         btn_start.config(state="normal")
         btn_yes.config(state="disabled")
         btn_no.config(state="disabled")
+        btn_statistics.config(state="normal")
 
 
 def start_game():
@@ -194,11 +272,17 @@ def start_game():
         show_message(f"{dealer_hand[0][0]} of {dealer_hand[0][1]}")
         show_message(f"{dealer_hand[1][0]} of {dealer_hand[1][1]}")
         show_message("Both have Blackjack! It's a Tie!")
+
+        record_game("tie")
+
         end_game()
         return
 
     elif player_blackjack:
         show_message("You've got Blackjack! You won!")
+
+        record_game("win", blackjack=True)
+
         end_game()
         return
 
@@ -207,6 +291,9 @@ def start_game():
         show_message(f"{dealer_hand[0][0]} of {dealer_hand[0][1]}")
         show_message(f"{dealer_hand[1][0]} of {dealer_hand[1][1]}")
         show_message("Dealer has Blackjack! You lost!")
+
+        record_game("loss")
+
         end_game()
         return
 
@@ -238,10 +325,16 @@ def another_card():
 
     if player_value > 21:
         show_message("Too High! Game Over!")
+
+        record_game("loss")
+
         end_game()
 
     elif player_value == 21:
         show_message("Perfect! You Won!")
+
+        record_game("win")
+
         end_game()
 
 
@@ -280,6 +373,13 @@ btn_yes.grid(row=0, column=1, padx=5)
 
 btn_no = tk.Button(frame, text="Stop", command=stop_game)
 btn_no.grid(row=0, column=2, padx=5)
+
+btn_statistics = tk.Button(
+    frame,
+    text="Statistics",
+    command=show_statistics
+)
+btn_statistics.grid(row=0, column=3, padx=5)
 
 update_buttons(False)
 
