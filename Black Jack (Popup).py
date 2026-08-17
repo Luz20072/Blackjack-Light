@@ -175,13 +175,17 @@ def stop_game():
         return
 
     end = True
+
     show_message(f"Your final Count is: {sum_of_player}")
 
-    dealer_hand = []
-    sum_of_dealer = 0
+    # Verdeckte Dealerkarte aufdecken
+    show_message("Dealer reveals the hidden card:")
+    show_message(f"{dealer_hand[1][0]} of {dealer_hand[1][1]}")
 
-    show_message("Dealer draws:")
+    sum_of_dealer = calculate_hand_value(dealer_hand)
+    show_message(f"Dealer's current Worth: {sum_of_dealer}")
 
+    # Dealer zieht bis mindestens 17
     while sum_of_dealer < 17:
         card = draw_card()
 
@@ -192,12 +196,12 @@ def stop_game():
         dealer_hand.append(card)
         sum_of_dealer = calculate_hand_value(dealer_hand)
 
-        show_message(
-            f"{card[0]} of {card[1]}   (Worth: {sum_of_dealer})"
-        )
+        show_message(f"Dealer draws: {card[0]} of {card[1]}")
+        show_message(f"Dealer's current Worth: {sum_of_dealer}")
 
         if sum_of_dealer > 21:
-            show_message("Dealer got too high!\nCongratulations! You Won!")
+            show_message("Dealer got too high!")
+            show_message("Congratulations! You Won!")
             return
 
         root.update()
