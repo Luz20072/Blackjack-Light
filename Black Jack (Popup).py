@@ -1,6 +1,5 @@
 import tkinter as tk
 from random import shuffle
-import time
 
 # Kartendaten
 symbols = ("Diamonds", "Hearts", "Clubs", "Spades")
@@ -69,6 +68,39 @@ def draw_card():
         return None
 
     return deck.pop()
+
+def dealer_draw_step():
+    global sum_of_dealer, dealer_hand
+
+    if sum_of_dealer < 17:
+        card = draw_card()
+
+        if card is None:
+            show_message("No cards left!")
+            return
+
+        dealer_hand.append(card)
+        sum_of_dealer = calculate_hand_value(dealer_hand)
+
+        show_message(f"Dealer draws: {card[0]} of {card[1]}")
+        show_message(f"Dealer's current Worth: {sum_of_dealer}")
+
+        if sum_of_dealer > 21:
+            show_message("Dealer got too high!")
+            show_message("Congratulations! You Won!")
+            return
+
+        root.after(500, dealer_draw_step)
+        return
+
+    show_message(f"Final Dealer-Worth: {sum_of_dealer}")
+
+    if sum_of_dealer < sum_of_player:
+        show_message("Congratulations! You Won!")
+    elif sum_of_dealer == sum_of_player:
+        show_message("Tie!")
+    else:
+        show_message("Oh No! You Lost!")
 
 def start_game():
     global sum_of_player, sum_of_dealer, end, player_hand, dealer_hand
@@ -185,36 +217,7 @@ def stop_game():
     sum_of_dealer = calculate_hand_value(dealer_hand)
     show_message(f"Dealer's current Worth: {sum_of_dealer}")
 
-    # Dealer zieht bis mindestens 17
-    while sum_of_dealer < 17:
-        card = draw_card()
-
-        if card is None:
-            show_message("No cards left!")
-            return
-
-        dealer_hand.append(card)
-        sum_of_dealer = calculate_hand_value(dealer_hand)
-
-        show_message(f"Dealer draws: {card[0]} of {card[1]}")
-        show_message(f"Dealer's current Worth: {sum_of_dealer}")
-
-        if sum_of_dealer > 21:
-            show_message("Dealer got too high!")
-            show_message("Congratulations! You Won!")
-            return
-
-        root.update()
-        time.sleep(0.5)
-
-    show_message(f"Final Dealer-Worth: {sum_of_dealer}")
-
-    if sum_of_dealer < sum_of_player:
-        show_message("Congratulations! You Won!")
-    elif sum_of_dealer == sum_of_player:
-        show_message("Tie!")
-    else:
-        show_message("Oh No! You Lost!")
+    dealer_draw_step()
 
 # Buttons
 frame = tk.Frame(root)
