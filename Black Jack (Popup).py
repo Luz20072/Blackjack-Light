@@ -15,6 +15,7 @@ worth_of_cards = {
 deck = []
 used_cards = []
 
+
 # Spiellogik
 
 def create_deck():
@@ -44,8 +45,6 @@ def calculate_hand_value(hand):
 player_hand = []
 dealer_hand = []
 
-sum_of_player = 0
-sum_of_dealer = 0
 end = False
 
 
@@ -90,9 +89,11 @@ def end_game():
 
 
 def dealer_draw_step():
-    global sum_of_dealer, dealer_hand
+    global dealer_hand
 
-    if sum_of_dealer < 17:
+    dealer_value = calculate_hand_value(dealer_hand)
+
+    if dealer_value < 17:
         card = draw_card()
 
         if card is None:
@@ -101,12 +102,12 @@ def dealer_draw_step():
             return
 
         dealer_hand.append(card)
-        sum_of_dealer = calculate_hand_value(dealer_hand)
+        dealer_value = calculate_hand_value(dealer_hand)
 
         show_message(f"Dealer draws: {card[0]} of {card[1]}")
-        show_message(f"Dealer's current Worth: {sum_of_dealer}")
+        show_message(f"Dealer's current Worth: {dealer_value}")
 
-        if sum_of_dealer > 21:
+        if dealer_value > 21:
             show_message("Dealer got too high!")
             show_message("Congratulations! You Won!")
             end_game()
@@ -115,11 +116,13 @@ def dealer_draw_step():
         root.after(500, dealer_draw_step)
         return
 
-    show_message(f"Final Dealer-Worth: {sum_of_dealer}")
+    show_message(f"Final Dealer-Worth: {dealer_value}")
 
-    if sum_of_dealer < sum_of_player:
+    player_value = calculate_hand_value(player_hand)
+
+    if dealer_value < player_value:
         show_message("Congratulations! You Won!")
-    elif sum_of_dealer == sum_of_player:
+    elif dealer_value == player_value:
         show_message("Tie!")
     else:
         show_message("Oh No! You Lost!")
@@ -139,13 +142,7 @@ def update_buttons(game_running):
 
 
 def start_game():
-    global sum_of_player, sum_of_dealer, end, player_hand, dealer_hand
-
-    player_blackjack = False
-    dealer_blackjack = False
-
-    sum_of_player = 0
-    sum_of_dealer = 0
+    global end, player_hand, dealer_hand
 
     player_hand = []
     dealer_hand = []
@@ -153,7 +150,7 @@ def start_game():
     end = False
     update_buttons(True)
 
-    if not deck:
+    if len(deck) < 4:
         create_deck()
 
     output.config(state="normal")
@@ -163,26 +160,33 @@ def start_game():
     # Spieler zieht zwei Karten
     for _ in range(2):
         card = draw_card()
+
+        if card is None:
+            show_message("No cards left!")
+            end_game()
+            return
+
         player_hand.append(card)
         show_message(f"Your card is the {card[0]} of {card[1]}")
 
-    sum_of_player = calculate_hand_value(player_hand)
+    player_value = calculate_hand_value(player_hand)
 
-    show_message(f"Current Worth: {sum_of_player}")
+    show_message(f"Current Worth: {player_value}")
 
     # Dealer zieht zwei Karten
     for _ in range(2):
         card = draw_card()
+
+        if card is None:
+            show_message("No cards left!")
+            end_game()
+            return
+
         dealer_hand.append(card)
 
-    sum_of_dealer = calculate_hand_value(dealer_hand)
-
     # Blackjack prüfen
-    if is_blackjack(player_hand):
-        player_blackjack = True
-
-    if is_blackjack(dealer_hand):
-        dealer_blackjack = True
+    player_blackjack = is_blackjack(player_hand)
+    dealer_blackjack = is_blackjack(dealer_hand)
 
     # Blackjack-Ergebnisse
     if player_blackjack and dealer_blackjack:
@@ -213,7 +217,7 @@ def start_game():
 
 
 def another_card():
-    global sum_of_player, end, player_hand
+    global end, player_hand
 
     if end:
         return
@@ -227,39 +231,39 @@ def another_card():
 
     player_hand.append(card)
 
-    sum_of_player = calculate_hand_value(player_hand)
+    player_value = calculate_hand_value(player_hand)
 
     show_message(f"Your new card is the {card[0]} of {card[1]}")
-    show_message(f"Current Worth: {sum_of_player}")
+    show_message(f"Current Worth: {player_value}")
 
-    if sum_of_player > 21:
+    if player_value > 21:
         show_message("Too High! Game Over!")
         end_game()
 
-    elif sum_of_player == 21:
+    elif player_value == 21:
         show_message("Perfect! You Won!")
         end_game()
 
 
 def stop_game():
-    global end, sum_of_player, sum_of_dealer, dealer_hand
+    global end
 
     if end:
         return
 
-    # Runde für den Spieler beenden,
-    # Hände aber noch nicht löschen,
-    # da der Dealer noch spielen muss.
     end = True
 
-    show_message(f"Your final Count is: {sum_of_player}")
+    player_value = calculate_hand_value(player_hand)
+
+    show_message(f"Your final Count is: {player_value}")
 
     # Verdeckte Dealerkarte aufdecken
-    show_message("Dealer reveals the hidden card:")
-    show_message(f"{dealer_hand[1][0]} of {dealer_hand[1][1]}")
+    if len(dealer_hand) >= 2:
+        show_message("Dealer reveals the hidden card:")
+        show_message(f"{dealer_hand[1][0]} of {dealer_hand[1][1]}")
 
-    sum_of_dealer = calculate_hand_value(dealer_hand)
-    show_message(f"Dealer's current Worth: {sum_of_dealer}")
+    dealer_value = calculate_hand_value(dealer_hand)
+    show_message(f"Dealer's current Worth: {dealer_value}")
 
     dealer_draw_step()
 
