@@ -55,6 +55,9 @@ root.geometry("400x400")
 output = tk.Text(root, height=15, width=45, state="disabled", wrap="word")
 output.pack(pady=10)
 
+def is_blackjack(hand):
+    return len(hand) == 2 and calculate_hand_value(hand) == 21
+
 def show_message(msg):
     output.config(state="normal")
     output.insert("end", msg + "\n")
@@ -70,6 +73,9 @@ def draw_card():
 def start_game():
     global sum_of_player, sum_of_dealer, end, player_hand, dealer_hand
 
+    player_blackjack = False
+    dealer_blackjack = False
+
     sum_of_player = 0
     sum_of_dealer = 0
 
@@ -84,14 +90,56 @@ def start_game():
     output.delete(1.0, "end")
     output.config(state="disabled")
 
-    card = draw_card()
-    player_hand.append(card)
+    # Spieler zieht zwei Karten
+    for _ in range(2):
+        card = draw_card()
+        player_hand.append(card)
+        show_message(f"Your card is the {card[0]} of {card[1]}")
 
     sum_of_player = calculate_hand_value(player_hand)
 
-    show_message(f"Your card is the {card[0]} of {card[1]}")
     show_message(f"Current Worth: {sum_of_player}")
 
+    # Dealer zieht zwei Karten
+    for _ in range(2):
+        card = draw_card()
+        dealer_hand.append(card)
+
+    sum_of_dealer = calculate_hand_value(dealer_hand)
+
+    # Blackjack prüfen
+    if is_blackjack(player_hand):
+        player_blackjack = True
+
+    if is_blackjack(dealer_hand):
+        dealer_blackjack = True
+
+    # Blackjack-Ergebnisse
+    if player_blackjack and dealer_blackjack:
+        show_message("Dealer's cards:")
+        show_message(f"{dealer_hand[0][0]} of {dealer_hand[0][1]}")
+        show_message(f"{dealer_hand[1][0]} of {dealer_hand[1][1]}")
+        show_message("Both have Blackjack! It's a Tie!")
+        end = True
+        return
+
+    elif player_blackjack:
+        show_message("You've got Blackjack! You won!")
+        end = True
+        return
+
+    elif dealer_blackjack:
+        show_message("Dealer's cards:")
+        show_message(f"{dealer_hand[0][0]} of {dealer_hand[0][1]}")
+        show_message(f"{dealer_hand[1][0]} of {dealer_hand[1][1]}")
+        show_message("Dealer has Blackjack! You lost!")
+        end = True
+        return
+
+    # Kein Blackjack
+    show_message("Dealer's cards:")
+    show_message(f"{dealer_hand[0][0]} of {dealer_hand[0][1]}")
+    show_message("Hidden card: ?")
 
 def another_card():
     global sum_of_player, end, player_hand
