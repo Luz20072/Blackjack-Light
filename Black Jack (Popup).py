@@ -1,5 +1,5 @@
 import tkinter as tk
-from random import randint
+from random import shuffle
 import time
 
 # Kartendaten
@@ -13,7 +13,23 @@ worth_of_cards = {
     "Jack": 11, "Queen": 11, "King": 11
 }
 
+deck = []
+
+
 # Spiellogik
+
+def create_deck():
+    global deck
+
+    deck = []
+
+    for symbol in symbols:
+        for typ in types:
+            deck.append((typ, symbol, worth_of_cards[typ]))
+
+    shuffle(deck)
+
+
 sum_of_player = 0
 sum_of_dealer = 0
 end = False
@@ -33,22 +49,30 @@ def show_message(msg):
     output.config(state="disabled")
 
 def draw_card():
-    symbol = symbols[randint(0, 3)]
-    typ = types[randint(0, 12)]
-    return typ, symbol, worth_of_cards[typ]
+    if not deck:
+        return None
+
+    return deck.pop()
 
 def start_game():
     global sum_of_player, end
+
     sum_of_player = 0
     end = False
+
+    create_deck()
+
     output.config(state="normal")
     output.delete(1.0, "end")
     output.config(state="disabled")
+
     card = draw_card()
     sum_of_player += card[2]
+
     show_message(f"Your card is the {card[0]} of {card[1]}")
     show_message(f"Current Worth: {sum_of_player}")
 
+    
 def another_card():
     global sum_of_player, end
     if end: 
