@@ -1,5 +1,5 @@
 import tkinter as tk
-from random import shuffle
+from random import shuffle, randint
 import time
 
 # Kartendaten
@@ -8,9 +8,9 @@ types = ("Two", "Three", "Four", "Five", "Six", "Seven",
          "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace")
 
 worth_of_cards = {
-    "Ace": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5, "Six": 6,
+    "Ace": 11, "Two": 2, "Three": 3, "Four": 4, "Five": 5, "Six": 6,
     "Seven": 7, "Eight": 8, "Nine": 9, "Ten": 10,
-    "Jack": 11, "Queen": 11, "King": 11
+    "Jack": 10, "Queen": 10, "King": 10
 }
 
 deck = []
@@ -28,6 +28,19 @@ def create_deck():
             deck.append((typ, symbol, worth_of_cards[typ]))
 
     shuffle(deck)
+
+def calculate_hand_value(hand):
+    value = sum(card[2] for card in hand)
+    aces = sum(1 for card in hand if card[0] == "Ace")
+
+    while value > 21 and aces > 0:
+        value -= 10
+        aces -= 1
+
+    return value
+
+player_hand = []
+dealer_hand = []
 
 
 sum_of_player = 0
@@ -55,9 +68,14 @@ def draw_card():
     return deck.pop()
 
 def start_game():
-    global sum_of_player, end
+    global sum_of_player, sum_of_dealer, end, player_hand, dealer_hand
 
     sum_of_player = 0
+    sum_of_dealer = 0
+
+    player_hand = []
+    dealer_hand = []
+
     end = False
 
     create_deck()
@@ -67,25 +85,33 @@ def start_game():
     output.config(state="disabled")
 
     card = draw_card()
-    sum_of_player += card[2]
+    player_hand.append(card)
+
+    sum_of_player = calculate_hand_value(player_hand)
 
     show_message(f"Your card is the {card[0]} of {card[1]}")
     show_message(f"Current Worth: {sum_of_player}")
 
-    
+
 def another_card():
-    global sum_of_player, end
-    if end: 
+    global sum_of_player, end, player_hand
+
+    if end:
         return
 
-    if sum_of_player >= 19:
-        _, _, value = draw_card()
-        sum_of_player += value
-    else:
-        card = draw_card()
-        sum_of_player += card[2]
-        show_message(f"Your new card is the {card[0]} of {card[1]}")
-        show_message(f"Current Worth: {sum_of_player}")
+    card = draw_card()
+
+    if card is None:
+        show_message("No cards left!")
+        end = True
+        return
+
+    player_hand.append(card)
+
+    sum_of_player = calculate_hand_value(player_hand)
+
+    show_message(f"Your new card is the {card[0]} of {card[1]}")
+    show_message(f"Current Worth: {sum_of_player}")
 
     if sum_of_player > 21:
         show_message("Too High! Game Over!")
@@ -95,26 +121,44 @@ def another_card():
         end = True
 
 def stop_game():
-    global end, sum_of_player, sum_of_dealer
+    global end, sum_of_player, sum_of_dealer, dealer_hand
+
     if end:
         return
+
     end = True
     show_message(f"Your final Count is: {sum_of_player}")
+
     dealer_cards_amount = randint(2, 4)
+
+    dealer_hand = []
     sum_of_dealer = 0
+
     show_message("Dealer draws:")
 
     for _ in range(dealer_cards_amount):
         card = draw_card()
-        sum_of_dealer += card[2]
-        show_message(f"{card[0]} of {card[1]}   (Worth: {sum_of_dealer})")
+
+        if card is None:
+            show_message("No cards left!")
+            return
+
+        dealer_hand.append(card)
+        sum_of_dealer = calculate_hand_value(dealer_hand)
+
+        show_message(
+            f"{card[0]} of {card[1]}   (Worth: {sum_of_dealer})"
+        )
+
         if sum_of_dealer > 21:
             show_message("Dealer got too high!\nCongratulations! You Won!")
             return
+
         root.update()
         time.sleep(0.5)
 
     show_message(f"Final Dealer-Worth: {sum_of_dealer}")
+
     if sum_of_dealer < sum_of_player:
         show_message("Congratulations! You Won!")
     elif sum_of_dealer == sum_of_player:
