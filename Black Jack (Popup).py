@@ -13,20 +13,22 @@ worth_of_cards = {
 }
 
 deck = []
-
+used_cards = []
 
 # Spiellogik
 
 def create_deck():
-    global deck
+    global deck, used_cards
 
     deck = []
+    used_cards = []
 
     for symbol in symbols:
         for typ in types:
             deck.append((typ, symbol, worth_of_cards[typ]))
 
     shuffle(deck)
+
 
 def calculate_hand_value(hand):
     value = sum(card[2] for card in hand)
@@ -38,13 +40,14 @@ def calculate_hand_value(hand):
 
     return value
 
+
 player_hand = []
 dealer_hand = []
-
 
 sum_of_player = 0
 sum_of_dealer = 0
 end = False
+
 
 # GUI Setup
 root = tk.Tk()
@@ -54,8 +57,10 @@ root.geometry("400x400")
 output = tk.Text(root, height=15, width=45, state="disabled", wrap="word")
 output.pack(pady=10)
 
+
 def is_blackjack(hand):
     return len(hand) == 2 and calculate_hand_value(hand) == 21
+
 
 def show_message(msg):
     output.config(state="normal")
@@ -63,11 +68,26 @@ def show_message(msg):
     output.see("end")
     output.config(state="disabled")
 
+
 def draw_card():
     if not deck:
         return None
 
-    return deck.pop()
+    card = deck.pop()
+    used_cards.append(card)
+
+    return card
+
+
+def end_game():
+    global end, player_hand, dealer_hand
+
+    end = True
+    update_buttons(False)
+
+    player_hand = []
+    dealer_hand = []
+
 
 def dealer_draw_step():
     global sum_of_dealer, dealer_hand
@@ -77,6 +97,7 @@ def dealer_draw_step():
 
         if card is None:
             show_message("No cards left!")
+            end_game()
             return
 
         dealer_hand.append(card)
@@ -88,6 +109,7 @@ def dealer_draw_step():
         if sum_of_dealer > 21:
             show_message("Dealer got too high!")
             show_message("Congratulations! You Won!")
+            end_game()
             return
 
         root.after(500, dealer_draw_step)
@@ -102,6 +124,20 @@ def dealer_draw_step():
     else:
         show_message("Oh No! You Lost!")
 
+    end_game()
+
+
+def update_buttons(game_running):
+    if game_running:
+        btn_start.config(state="disabled")
+        btn_yes.config(state="normal")
+        btn_no.config(state="normal")
+    else:
+        btn_start.config(state="normal")
+        btn_yes.config(state="disabled")
+        btn_no.config(state="disabled")
+
+
 def start_game():
     global sum_of_player, sum_of_dealer, end, player_hand, dealer_hand
 
@@ -115,8 +151,10 @@ def start_game():
     dealer_hand = []
 
     end = False
+    update_buttons(True)
 
-    create_deck()
+    if not deck:
+        create_deck()
 
     output.config(state="normal")
     output.delete(1.0, "end")
@@ -152,12 +190,12 @@ def start_game():
         show_message(f"{dealer_hand[0][0]} of {dealer_hand[0][1]}")
         show_message(f"{dealer_hand[1][0]} of {dealer_hand[1][1]}")
         show_message("Both have Blackjack! It's a Tie!")
-        end = True
+        end_game()
         return
 
     elif player_blackjack:
         show_message("You've got Blackjack! You won!")
-        end = True
+        end_game()
         return
 
     elif dealer_blackjack:
@@ -165,13 +203,14 @@ def start_game():
         show_message(f"{dealer_hand[0][0]} of {dealer_hand[0][1]}")
         show_message(f"{dealer_hand[1][0]} of {dealer_hand[1][1]}")
         show_message("Dealer has Blackjack! You lost!")
-        end = True
+        end_game()
         return
 
     # Kein Blackjack
     show_message("Dealer's cards:")
     show_message(f"{dealer_hand[0][0]} of {dealer_hand[0][1]}")
     show_message("Hidden card: ?")
+
 
 def another_card():
     global sum_of_player, end, player_hand
@@ -183,7 +222,7 @@ def another_card():
 
     if card is None:
         show_message("No cards left!")
-        end = True
+        end_game()
         return
 
     player_hand.append(card)
@@ -195,10 +234,12 @@ def another_card():
 
     if sum_of_player > 21:
         show_message("Too High! Game Over!")
-        end = True
+        end_game()
+
     elif sum_of_player == 21:
         show_message("Perfect! You Won!")
-        end = True
+        end_game()
+
 
 def stop_game():
     global end, sum_of_player, sum_of_dealer, dealer_hand
@@ -206,6 +247,9 @@ def stop_game():
     if end:
         return
 
+    # Runde für den Spieler beenden,
+    # Hände aber noch nicht löschen,
+    # da der Dealer noch spielen muss.
     end = True
 
     show_message(f"Your final Count is: {sum_of_player}")
@@ -219,6 +263,7 @@ def stop_game():
 
     dealer_draw_step()
 
+
 # Buttons
 frame = tk.Frame(root)
 frame.pack(pady=10)
@@ -231,5 +276,7 @@ btn_yes.grid(row=0, column=1, padx=5)
 
 btn_no = tk.Button(frame, text="Stop", command=stop_game)
 btn_no.grid(row=0, column=2, padx=5)
+
+update_buttons(False)
 
 root.mainloop()
