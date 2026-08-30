@@ -1,3 +1,4 @@
+```python
 import tkinter as tk
 from random import shuffle
 
@@ -199,7 +200,7 @@ def place_bet(amount):
 # =========================================================
 
 root = tk.Tk()
-root.title("Blackjack")
+root.title("Blackjack Light")
 root.geometry("500x400")
 
 
@@ -769,3 +770,4 @@ create_deck()
 update_buttons(False)
 
 root.mainloop()
+```
